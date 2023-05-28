@@ -28,7 +28,7 @@ fn handle_connection(mut stream: TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
-    let response = "+OK\r\n";
+    let response = "+PONG\r\n";
 
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
