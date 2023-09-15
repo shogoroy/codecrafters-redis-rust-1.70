@@ -8,7 +8,7 @@ use std::net::TcpStream;
 use std::thread::spawn;
 
 struct RedisRequest {
-    args_len: usize,
+    n_data: usize,
     command: String,
     message: String,
     data: Vec<String>,
@@ -44,20 +44,21 @@ fn handle_connection(stream: &TcpStream) {
 
     let rr = read_redis_request(&mut reader);
 
-    let response = "+PONG\r\n";
+    let mut response = String::from("+PONG\r\n");
 
     if validate_echo_command(&rr) {
-        let response = &handle_echo_data(&rr);
-        if response.len() != rr.args_len {
-            let _result = writer
-                .write(new_error_message("ERR wrong number of arguments for command").as_bytes());
-        } else {
-            let _result = writer.write(response.as_bytes());
+        response = handle_echo_data(&rr);
+        if (rr.data.len() + 1) != rr.n_data {
+            response = new_error_message("ERR wrong number of arguments for command");
+            println!(
+                "ERR wrong number of arguments for command: {}, {}",
+                rr.data.len(),
+                rr.n_data
+            );
         }
-    } else {
-        let _result = writer.write(response.as_bytes());
     }
 
+    writer.write_all(response.as_bytes()).unwrap();
     writer.flush().unwrap();
 }
 
@@ -80,15 +81,30 @@ fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> RedisRequest {
         }
     };
 
-    let data: Vec<String> = message.split("\\r\\n").map(str::to_string).collect();
+    parse_message(message)
+}
 
-    let args_len = data.get(1).unwrap_or(&String::new()).parse().unwrap();
-    let command = data.get(2).unwrap_or(&String::new()).to_string();
+fn parse_message(message: String) -> RedisRequest {
+    let commands: Vec<String> = message.split("\\r\\n").map(str::to_string).collect();
+
+    let n_data: usize = commands
+        .get(0)
+        .unwrap_or(&String::new())
+        .replace("*", "")
+        .parse()
+        .unwrap_or(0);
+
+    let mut contents: Vec<String> = vec![String::new(); n_data];
+    for i in 0..n_data {
+        contents[i] = commands.get((i + 1) * 2).unwrap().to_string();
+    }
+    let command = contents.get(0).unwrap_or(&String::new()).to_string();
+    let data = contents.get(1..).unwrap_or_default().to_vec();
 
     let rr = RedisRequest {
-        args_len,
-        command,
+        n_data,
         message,
+        command,
         data,
     };
 
@@ -100,7 +116,7 @@ fn validate_echo_command(rr: &RedisRequest) -> bool {
 }
 
 fn handle_echo_data(rr: &RedisRequest) -> String {
-    let message = rr.data.get(3..).unwrap().join(" ");
+    let message = rr.data.join(" ");
 
     message
 }
