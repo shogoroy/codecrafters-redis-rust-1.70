@@ -5,7 +5,6 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::str::from_utf8;
 use std::thread::spawn;
 
 struct RedisRequest {
@@ -44,7 +43,7 @@ fn handle_connection(stream: &TcpStream) {
 
     let rr = read_redis_request(&mut reader);
 
-    let mut response = "+PONG\r\n";
+    let response = "+PONG\r\n";
 
     if validate_echo_command(&rr) {
         let response = &handle_echo_data(rr);
