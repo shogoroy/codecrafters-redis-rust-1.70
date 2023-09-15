@@ -8,6 +8,7 @@ use std::net::TcpStream;
 use std::thread::spawn;
 
 struct RedisRequest {
+    args_len: usize,
     command: String,
     message: String,
     data: Vec<String>,
@@ -46,8 +47,13 @@ fn handle_connection(stream: &TcpStream) {
     let response = "+PONG\r\n";
 
     if validate_echo_command(&rr) {
-        let response = &handle_echo_data(rr);
-        let _result = writer.write(response.as_bytes());
+        let response = &handle_echo_data(&rr);
+        if response.len() != rr.args_len {
+            let _result = writer
+                .write(new_error_message("ERR wrong number of arguments for command").as_bytes());
+        } else {
+            let _result = writer.write(response.as_bytes());
+        }
     } else {
         let _result = writer.write(response.as_bytes());
     }
@@ -76,9 +82,11 @@ fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> RedisRequest {
 
     let data: Vec<String> = message.split("\\r\\n").map(str::to_string).collect();
 
+    let args_len = data.get(1).unwrap_or(&String::new()).parse().unwrap();
     let command = data.get(2).unwrap_or(&String::new()).to_string();
 
     let rr = RedisRequest {
+        args_len,
         command,
         message,
         data,
@@ -91,8 +99,12 @@ fn validate_echo_command(rr: &RedisRequest) -> bool {
     rr.command == "ECHO"
 }
 
-fn handle_echo_data(rr: RedisRequest) -> String {
+fn handle_echo_data(rr: &RedisRequest) -> String {
     let message = rr.data.get(3..).unwrap().join(" ");
 
     message
+}
+
+fn new_error_message(message: &str) -> String {
+    String::from("-Error ") + message
 }
