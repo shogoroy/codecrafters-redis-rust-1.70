@@ -92,7 +92,7 @@ fn validate_echo_command(rr: &RedisRequest) -> bool {
 }
 
 fn handle_echo_data(rr: RedisRequest) -> String {
-    let message = rr.data.get(4).unwrap_or(&String::new()).to_string();
+    let message = rr.data.get(3..).unwrap().join(" ");
 
     message
 }
