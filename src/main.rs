@@ -10,7 +10,6 @@ use std::thread::spawn;
 struct RedisRequest {
     n_data: usize,
     command: String,
-    message: String,
     data: Vec<String>,
 }
 
@@ -103,7 +102,6 @@ fn parse_message(message: String) -> RedisRequest {
 
     let rr = RedisRequest {
         n_data,
-        message,
         command,
         data,
     };
