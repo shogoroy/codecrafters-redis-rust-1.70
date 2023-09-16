@@ -1,3 +1,5 @@
+use domain::resp::model::Resp;
+use domain::resp::validator::*;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -7,11 +9,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::thread::spawn;
 
-struct RedisRequest {
-    n_data: usize,
-    command: String,
-    data: Vec<String>,
-}
+mod domain;
 
 fn main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -46,22 +44,14 @@ fn handle_connection(stream: &TcpStream) {
     let mut response = String::from("+PONG\r\n");
 
     if validate_echo_command(&rr) {
-        response = handle_echo_data(&rr);
-        if (rr.data.len() + 1) != rr.n_data {
-            response = new_error_message("ERR wrong number of arguments for command");
-            println!(
-                "ERR wrong number of arguments for command: {}, {}",
-                rr.data.len(),
-                rr.n_data
-            );
-        }
+        response = rr.echo();
     }
 
     writer.write_all(response.as_bytes()).unwrap();
     writer.flush().unwrap();
 }
 
-fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> RedisRequest {
+fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> Resp {
     let mut message = String::new();
 
     let _data = match reader.read_line(&mut message) {
@@ -80,45 +70,5 @@ fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> RedisRequest {
         }
     };
 
-    parse_message(message)
-}
-
-fn parse_message(message: String) -> RedisRequest {
-    let commands: Vec<String> = message.split("\\r\\n").map(str::to_string).collect();
-
-    let n_data: usize = commands
-        .get(0)
-        .unwrap_or(&String::new())
-        .replace("*", "")
-        .parse()
-        .unwrap_or(0);
-
-    let mut contents: Vec<String> = vec![String::new(); n_data];
-    for i in 0..n_data {
-        contents[i] = commands.get((i + 1) * 2).unwrap().to_string();
-    }
-    let command = contents.get(0).unwrap_or(&String::new()).to_string();
-    let data = contents.get(1..).unwrap_or_default().to_vec();
-
-    let rr = RedisRequest {
-        n_data,
-        command,
-        data,
-    };
-
-    rr
-}
-
-fn validate_echo_command(rr: &RedisRequest) -> bool {
-    rr.command == "ECHO"
-}
-
-fn handle_echo_data(rr: &RedisRequest) -> String {
-    let message = rr.data.join(" ");
-
-    message
-}
-
-fn new_error_message(message: &str) -> String {
-    String::from("-Error ") + message
+    Resp::new(message)
 }
