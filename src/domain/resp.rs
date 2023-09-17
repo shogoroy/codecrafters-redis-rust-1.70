@@ -71,7 +71,7 @@ impl Resp {
 
     pub fn validate_echo_command(&self) -> bool {
         match self.command {
-            RespCommand::ECHO => true,
+            RespCommand::Echo => true,
             _ => false,
         }
     }

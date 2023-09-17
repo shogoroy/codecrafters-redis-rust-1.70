@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
 pub enum RespCommand {
-    ECHO,
-    PING,
+    Echo,
+    Ping,
 }
 
 impl FromStr for RespCommand {
@@ -10,8 +10,8 @@ impl FromStr for RespCommand {
 
     fn from_str(command: &str) -> Result<RespCommand, Self::Err> {
         match command {
-            "ECHO" => Ok(RespCommand::ECHO),
-            "PING" => Ok(RespCommand::PING),
+            "ECHO" => Ok(RespCommand::Echo),
+            "PING" => Ok(RespCommand::Ping),
             _ => Err(()),
         }
     }
