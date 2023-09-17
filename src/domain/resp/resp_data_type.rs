@@ -1,0 +1,16 @@
+pub enum RespDataType {
+    SimpleStrings,
+    SimpleErrors,
+    Integers,
+    BulgStrings,
+    Arrays,
+    Nulls,
+    Booleans,
+    Doubles,
+    BigNumbers,
+    BulkErrors,
+    VerbatimStrings,
+    Maps,
+    Sets,
+    Pushes,
+}

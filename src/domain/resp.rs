@@ -1,8 +1,10 @@
 mod resp_command;
+mod resp_data_type;
 
 use std::str::FromStr;
 
 use resp_command::RespCommand;
+use resp_data_type::RespDataType;
 
 pub struct Resp {
     pub raw: String,
@@ -73,6 +75,26 @@ impl Resp {
         match self.command {
             RespCommand::Echo => true,
             _ => false,
+        }
+    }
+
+    fn get_resp_data_type(raw: &String) -> Result<RespDataType, &str> {
+        match raw.chars().next().unwrap() {
+            '+' => Ok(RespDataType::SimpleStrings),
+            '-' => Ok(RespDataType::SimpleErrors),
+            ':' => Ok(RespDataType::Integers),
+            '$' => Ok(RespDataType::BulgStrings),
+            '*' => Ok(RespDataType::Arrays),
+            '_' => Ok(RespDataType::Nulls),
+            '#' => Ok(RespDataType::Booleans),
+            ',' => Ok(RespDataType::Doubles),
+            '(' => Ok(RespDataType::BigNumbers),
+            '!' => Ok(RespDataType::BulkErrors),
+            '=' => Ok(RespDataType::VerbatimStrings),
+            '%' => Ok(RespDataType::Maps),
+            '~' => Ok(RespDataType::Sets),
+            '>' => Ok(RespDataType::Pushes),
+            _ => Err(""),
         }
     }
 }
