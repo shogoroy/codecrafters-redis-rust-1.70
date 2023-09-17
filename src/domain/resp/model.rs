@@ -1,7 +1,7 @@
 pub struct Resp {
     pub raw: String,
     pub n_data: usize,
-    pub command: String,
+    pub command: crate::domain::resp_command::RespCommand,
     pub data: Vec<String>,
 }
 
