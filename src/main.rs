@@ -1,5 +1,4 @@
-use domain::resp::model::Resp;
-use domain::resp::validator::*;
+use domain::resp::Resp;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -43,7 +42,7 @@ fn handle_connection(stream: &TcpStream) {
 
     let mut response = String::from("+PONG\r\n");
 
-    if validate_echo_command(&rr) {
+    if rr.validate_echo_command() {
         response = rr.echo();
     }
 
