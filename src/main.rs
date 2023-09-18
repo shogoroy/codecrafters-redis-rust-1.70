@@ -38,15 +38,18 @@ fn handle_connection(stream: &TcpStream) {
     let mut reader = BufReader::new(stream);
     let mut writer = BufWriter::new(stream);
 
-    let resp = read_redis_request(&mut reader);
+    let response = match read_redis_request(&mut reader) {
+        Ok(resp) => resp.response(),
+        Err(e) => Resp::error(e.as_str()),
+    };
 
-    let response = resp.response();
+    println!("{}", response);
 
     writer.write_all(response.as_bytes()).unwrap();
     writer.flush().unwrap();
 }
 
-fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> Resp {
+fn read_redis_request(reader: &mut BufReader<&TcpStream>) -> Result<Resp, String> {
     let mut message = String::new();
 
     let _data = match reader.read_line(&mut message) {

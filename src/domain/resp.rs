@@ -14,15 +14,15 @@ pub struct Resp {
 }
 
 impl Resp {
-    pub fn new(raw_message: String) -> Self {
-        Self::parse_message(raw_message).unwrap()
+    pub fn new(raw_message: String) -> Result<Self, String> {
+        Self::parse_message(raw_message)
     }
 
     pub fn echo(&self) -> String {
         let message = self.data.join(" ");
 
         if (self.data.len() + 1) != self.n_data {
-            self.error("ERR wrong number of arguments for command");
+            Self::error("ERR wrong number of arguments for command");
             println!(
                 "ERR wrong number of arguments for command: {}, {}",
                 self.data.len(),
@@ -33,11 +33,11 @@ impl Resp {
         message
     }
 
-    pub fn error(&self, message: &str) -> String {
+    pub fn error(message: &str) -> String {
         String::from("-Error ") + message
     }
 
-    fn parse_message(message: String) -> Option<Resp> {
+    fn parse_message(message: String) -> Result<Resp, String> {
         let commands: Vec<String> = message.split("\\r\\n").map(str::to_string).collect();
 
         let first_message = commands.get(0).unwrap();
@@ -52,7 +52,7 @@ impl Resp {
                         command: RespCommand::Ping,
                         data,
                     };
-                    Some(resp)
+                    Ok(resp)
                 }
                 RespDataType::Arrays => {
                     let n_data: usize = first_message.replace("*", "").parse().unwrap_or(0);
@@ -70,15 +70,15 @@ impl Resp {
                         command: RespCommand::from_str(command.as_str()).unwrap(),
                         data,
                     };
-                    Some(resp)
+                    Ok(resp)
                 }
-                _ => None, // FIXME
+                _ => Err("Not implemented resp data command".to_string()),
             },
-            Err(_) => None,
+            Err(e) => Err(e),
         }
     }
 
-    fn get_resp_data_type(raw: &String) -> Result<RespDataType, &str> {
+    fn get_resp_data_type(raw: &String) -> Result<RespDataType, String> {
         match raw.chars().next().unwrap() {
             '+' => Ok(RespDataType::SimpleStrings),
             '-' => Ok(RespDataType::SimpleErrors),
@@ -94,7 +94,7 @@ impl Resp {
             '%' => Ok(RespDataType::Maps),
             '~' => Ok(RespDataType::Sets),
             '>' => Ok(RespDataType::Pushes),
-            _ => Err(""),
+            _ => Err("Message is not RESP string".to_string()),
         }
     }
 
