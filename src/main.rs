@@ -40,11 +40,7 @@ fn handle_connection(stream: &TcpStream) {
 
     let resp = read_redis_request(&mut reader);
 
-    let mut response = String::from("+PONG\r\n");
-
-    if resp.validate_echo_command() {
-        response = resp.echo();
-    }
+    let response = resp.response();
 
     writer.write_all(response.as_bytes()).unwrap();
     writer.flush().unwrap();
