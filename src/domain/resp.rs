@@ -34,7 +34,7 @@ impl Resp {
     }
 
     pub fn error(message: &str) -> String {
-        String::from("-Error ") + message
+        String::from("-Error ") + message + "\r\n"
     }
 
     fn parse_message(message: String) -> Result<Resp, String> {
@@ -101,7 +101,7 @@ impl Resp {
     pub fn response(self) -> String {
         match self.command {
             RespCommand::Echo => self.echo(),
-            RespCommand::Ping => String::from("+PONG"),
+            RespCommand::Ping => String::from("+PONG\r\n"),
         }
     }
 }
