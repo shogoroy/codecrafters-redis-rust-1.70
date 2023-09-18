@@ -38,12 +38,12 @@ fn handle_connection(stream: &TcpStream) {
     let mut reader = BufReader::new(stream);
     let mut writer = BufWriter::new(stream);
 
-    let rr = read_redis_request(&mut reader);
+    let resp = read_redis_request(&mut reader);
 
     let mut response = String::from("+PONG\r\n");
 
-    if rr.validate_echo_command() {
-        response = rr.echo();
+    if resp.validate_echo_command() {
+        response = resp.echo();
     }
 
     writer.write_all(response.as_bytes()).unwrap();

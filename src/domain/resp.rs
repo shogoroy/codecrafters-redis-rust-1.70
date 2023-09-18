@@ -47,12 +47,13 @@ impl Resp {
             RespDataType::SimpleStrings => {
                 // TODO: if first_message.as_str() == "ping" {
                 let data = commands.get(1..).unwrap_or_default().to_vec();
-                Some(Resp {
+                let resp = Resp {
                     raw: message,
                     n_data: 0,
                     command: RespCommand::Ping,
                     data,
-                })
+                };
+                Some(resp)
             }
             RespDataType::Arrays => {
                 let n_data: usize = first_message.replace("*", "").parse().unwrap_or(0);
@@ -64,12 +65,13 @@ impl Resp {
                 let command = contents.get(0).unwrap_or(&String::new()).to_string();
                 let data = contents.get(1..).unwrap_or_default().to_vec();
 
-                Some(Resp {
+                let resp = Resp {
                     raw: message,
                     n_data,
                     command: RespCommand::from_str(command.as_str()).unwrap(),
                     data,
-                })
+                };
+                Some(resp)
             }
             _ => None, // FIXME
         }
